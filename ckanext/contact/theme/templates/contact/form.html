@@ -2,14 +2,14 @@
 
 {% block breadcrumb_content %}
     {{ super() }}
-  <li><a href="{{ h.url_for('contact_form') }}">Contact</a></li>
+  <li><a href="{{ h.url_for('contact_form') }}">General Inquiries</a></li>
 
 {% endblock %}
 
 {% block primary_content %}
   <article class="module">
     <div class="module-content">
-      <h1 class="page-heading">Contact us</h1>
+      <h1 class="page-heading">General Inquiries</h1>
 
         {% block contact_form_content %}
             {% include "contact/snippets/form.html" %}
@@ -23,11 +23,14 @@
 <div class="module module-narrow module-shallow">
   <h2 class="module-heading">
     <i class="icon-info-sign"></i>
-    {{ _('Contact Us') }}
+    {{ _('General Inquiries') }}
   </h2>
   <div class="module-content">
     <p>
       Questions? Comments? We are always glad to hear from you!
+    </p>
+    <p>
+      If you have technical questions or feedback on the site, please go to the Help & Feedback link located at the footer of the site.
     </p>
   </div>
 </div>
