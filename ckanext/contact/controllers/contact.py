@@ -175,12 +175,5 @@ class ContactController(base.BaseController):
             except AttributeError:
                 extra_vars[u'data'][u'name'] = extra_vars[u'data'][u'email'] = None
 
-
-        # if data.get('success', False):
-        #     return p.toolkit.render('contact/success.html')
-        # else:
-        #     vars = {'data': data, 'errors': errors, 'error_summary': error_summary}
-        #     return p.toolkit.render('contact/form.html', extra_vars=vars)
-
         return p.toolkit.render(u'contact/form.html', extra_vars=extra_vars)
 
