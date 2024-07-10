@@ -1,5 +1,87 @@
 # Changelog
 
+## v2.4.0 (2024-01-15)
+
+### Feature
+
+- check provided email address with pyisemail
+
+### Fix
+
+- remove unnecessary markdown message in request field
+
+### Style
+
+- fix run-on sentence
+
+### Chores/Misc
+
+- add build section to read the docs config
+- add regex for version line in citation file
+- add citation.cff to list of files with version
+- add contributing guidelines
+- add code of conduct
+- add citation file
+- update support.md links
+
+## v2.3.1 (2023-07-17)
+
+### Docs
+
+- update logos
+
+## v2.3.0 (2023-04-11)
+
+### Feature
+
+- add a prefix to email subject when it's provided in the config
+- allow users to specify a subject line in their contact emails
+
+### Fix
+
+- expect no trailing space in the prefix from config
+
+### Refactor
+
+- move tests into unit subdir
+
+### Docs
+
+- add the new prefix option to the docs
+
+### Tests
+
+- fix a test
+- add additional tests for the ne subject changes
+
+### Build System(s)
+
+- fix postgres not loading when running tests in docker
+
+### Chores/Misc
+
+- add action to sync branches when commits are pushed to main
+
+## v2.2.0 (2023-04-03)
+
+### Feature
+
+- allow contact emails to be sent to multiple recipients
+
+## v2.1.6 (2023-02-20)
+
+### Docs
+
+- fix api docs generation script
+
+### Style
+
+- reformat with prettier
+
+### Chores/Misc
+
+- small fixes to align with other extensions
+
 ## v2.1.5 (2023-01-31)
 
 ### Docs
