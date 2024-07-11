@@ -13,6 +13,7 @@ from ckan.plugins import PluginImplementations, toolkit
 from ckanext.contact import recaptcha
 from ckanext.contact.interfaces import IContact
 from datetime import datetime, timezone
+from pyisemail import is_email
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ def validate(data_dict):
     """
     errors = {}
     error_summary = {}
+    optional_fields = {'subject'}
     recaptcha_error = None
 
     # check each field to see if it has a value and if not, show and error
@@ -34,9 +36,21 @@ def validate(data_dict):
         # we know the save field is not necessary and may be empty so ignore it
         if field == 'save':
             continue
+        # ignore optionals
+        if field in optional_fields:
+            continue
         if value is None or value == '':
             errors[field] = ['Missing Value']
             error_summary[field] = 'Missing value'
+
+    # check the email address, if there is one and the config option isn't off
+    if (
+        toolkit.asbool(toolkit.config.get('ckanext.contact.check_email', True))
+        and data_dict['email']
+    ):
+        if not is_email(data_dict['email'], check_dns=True):
+            errors['email'] = ['Email address appears to be invalid']
+            error_summary['email'] = 'Email address appears to be invalid'
 
     # only check the recaptcha if there are no errors
     if not errors:
@@ -54,16 +68,21 @@ def validate(data_dict):
 
 
 def build_subject(
-    subject_default='Contact/Question from visitor', timestamp_default=False
+    subject=None, default='Contact/Question from visitor', timestamp_default=False
 ):
     """
-    Creates the subject line for the contact email using the config or the defaults.
+    Creates the subject line for the contact email using the config or the provided
+    subject.
 
-    :param subject_default: the default str to use if ckanext.contact.subject isn't specified
-    :param timestamp_default: the default bool to use if add_timestamp_to_subject isn't specified
+    :param subject: a user defined subject line
+    :param default: the default str to use if the user didn't provide a subject or
+                    ckanext.contact.subject isn't specified
+    :param timestamp_default: the default bool to use if add_timestamp_to_subject isn't
+                              specified
     :return: the subject line
     """
-    subject = toolkit.config.get('ckanext.contact.subject', toolkit._(subject_default))
+    if not subject:
+        subject = toolkit.config.get('ckanext.contact.subject', toolkit._(default))
     if asbool(
         toolkit.config.get(
             'ckanext.contact.add_timestamp_to_subject', timestamp_default
@@ -71,7 +90,10 @@ def build_subject(
     ):
         timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
         subject = f'{subject} [{timestamp}]'
-    return subject
+
+    prefix = toolkit.config.get('ckanext.contact.subject_prefix', '')
+
+    return f'{prefix}{" " if prefix else ""}{subject}'
 
 
 def submit():
@@ -107,7 +129,7 @@ def submit():
             'recipient_name': toolkit.config.get(
                 'ckanext.contact.recipient_name', toolkit.config.get('ckan.site_title')
             ),
-            'subject': build_subject(),
+            'subject': build_subject(subject=data_dict.get('subject')),
             'body': '\n'.join(body_parts),
             'headers': {'reply-to': data_dict['email']},
         }
@@ -116,10 +138,20 @@ def submit():
         for plugin in PluginImplementations(IContact):
             plugin.mail_alter(mail_dict, data_dict)
 
-        try:
-            mailer.mail_recipient(**mail_dict)
-        except (mailer.MailerException, socket.error):
-            email_success = False
+        # note the pop here so that we don't get parameter clashes when we call
+        # mail_recipient below
+        emails = mail_dict.pop('recipient_email')
+        names = mail_dict.pop('recipient_name')
+        if isinstance(emails, str):
+            emails = [emails]
+            names = [names]
+
+        # send the email to each name/email pair
+        for name, email in zip(names, emails):
+            try:
+                mailer.mail_recipient(name, email, **mail_dict)
+            except (mailer.MailerException, socket.error):
+                email_success = False
 
     return {
         'success': recaptcha_error is None and len(errors) == 0 and email_success,

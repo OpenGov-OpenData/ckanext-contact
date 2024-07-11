@@ -1,5 +1,5 @@
 <!--header-start-->
-<img src="https://github.com/NaturalHistoryMuseum/ckanext-contact/raw/main/.github/nhm-logo.svg" align="left" width="150px" height="100px" hspace="40"/>
+<img src="https://data.nhm.ac.uk/images/nhm_logo.svg" align="left" width="150px" height="100px" hspace="40"/>
 
 # ckanext-contact
 
@@ -83,6 +83,7 @@ These are the options that can be specified in your .ini config file.
 | `ckanext.contact.recipient_name`           | Name of the recipient                             | `ckan.site_title`               |
 | `ckanext.contact.subject`                  | Email subject for the submitted form              | 'Contact/Question from visitor' |
 | `ckanext.contact.add_timestamp_to_subject` | Whether to append a timestamp to the subject line | `false`                         |
+| `ckanext.contact.subject_prefix`           | A prefix to add to the subject before sending     | ''                              |
 
 ## Recaptcha
 
@@ -91,6 +92,12 @@ These are the options that can be specified in your .ini config file.
 | `ckanext.contact.recaptcha_v3_key`    | API key for the reCAPTCHA service.       | False (i.e. disabled) |
 | `ckanext.contact.recaptcha_v3_secret` | API secret for the reCAPTCHA service.    | False (i.e. disabled) |
 | `ckanext.contact.recaptcha_v3_action` | `data-module-action` for the form/button |                       |
+
+## Other
+
+| Name                          | Description                                                                                          | Default             |
+|-------------------------------|------------------------------------------------------------------------------------------------------|---------------------|
+| `ckanext.contact.check_email` | Set to False to disable checking email addresses via [pyIsEmail](https://pypi.org/project/pyIsEmail) | True (i.e. enabled) |
 
 <!--configuration-end-->
 
@@ -106,7 +113,7 @@ Add the following HTML where you want the contact button to appear:
     <i class="fas fa-envelope"></i>{{ link_text if link_text else _('CONTACT BUTTON TEXT') }}
 </a>
 
-{% resource 'ckanext-contact/main' %}
+{% asset 'ckanext-contact/main' %}
 ```
 
 Where `params` is a dict with three entries: package_id, resource_id, record_id (all of which are optional).
