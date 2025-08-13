@@ -1,9 +1,13 @@
 <!--header-start-->
-<img src="https://data.nhm.ac.uk/images/nhm_logo.svg" align="left" width="150px" height="100px" hspace="40"/>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://data.nhm.ac.uk/images/nhm_logo.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://data.nhm.ac.uk/images/nhm_logo_black.svg">
+  <img alt="The Natural History Museum logo." src="https://data.nhm.ac.uk/images/nhm_logo_black.svg" align="left" width="150px" height="100px" hspace="40">
+</picture>
 
 # ckanext-contact
 
-[![Tests](https://img.shields.io/github/actions/workflow/status/NaturalHistoryMuseum/ckanext-contact/main.yml?style=flat-square)](https://github.com/NaturalHistoryMuseum/ckanext-contact/actions/workflows/main.yml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/NaturalHistoryMuseum/ckanext-contact/tests.yml?style=flat-square)](https://github.com/NaturalHistoryMuseum/ckanext-contact/actions/workflows/tests.yml)
 [![Coveralls](https://img.shields.io/coveralls/github/NaturalHistoryMuseum/ckanext-contact/main?style=flat-square)](https://coveralls.io/github/NaturalHistoryMuseum/ckanext-contact)
 [![CKAN](https://img.shields.io/badge/ckan-2.9.7-orange.svg?style=flat-square)](https://github.com/ckan/ckan)
 [![Python](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg?style=flat-square)](https://www.python.org/)
@@ -129,7 +133,7 @@ To run the tests against ckan 2.9.x on Python3:
 
 1. Build the required images:
    ```shell
-   docker-compose build
+   docker compose build
    ```
 
 2. Then run the tests.
@@ -137,7 +141,7 @@ To run the tests against ckan 2.9.x on Python3:
    configuration, so you should only need to rebuild the ckan image if you change the extension's
    dependencies.
    ```shell
-   docker-compose run ckan
+   docker compose run ckan
    ```
 
 <!--testing-end-->
