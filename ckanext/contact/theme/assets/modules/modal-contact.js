@@ -50,6 +50,11 @@ ckan.module('modal-contact', function ($, _) {
           );
 
           self.modal = $(html);
+          // populate the referrer URL field with the current page URL
+          const referrerField = self.modal.find('#field-referrer-url');
+          if (referrerField.length) {
+            referrerField.val(window.location.href || '');
+          }
           // add a close button to the modal
           self.modal
             .find('.modal-header :header')

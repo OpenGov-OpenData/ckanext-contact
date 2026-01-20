@@ -33,6 +33,8 @@
                 {{ form.textarea('content', label=_('Comment'), id='field-content',
                                  value=data.content, error=errors.content,
                                  placeholder=_('What do you have to tell us?'), is_required=true) }}
+
+                <input type="hidden" name="referrer_url" id="field-referrer-url" value="" />
             {% endblock %}
         </fieldset>
 

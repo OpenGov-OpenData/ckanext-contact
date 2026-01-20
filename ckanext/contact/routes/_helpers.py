@@ -30,7 +30,7 @@ def validate(data_dict):
     """
     errors = {}
     error_summary = {}
-    optional_fields = {'subject'}
+    optional_fields = {'subject', 'referrer_url'}
     recaptcha_error = None
 
     # check each field to see if it has a value and if not, show and error
@@ -124,6 +124,10 @@ def submit():
             f'  Name: {data_dict["name"]}',
             f'  Email: {data_dict["email"]}',
         ]
+        # include referrer URL if available
+        referrer_url = data_dict.get('referrer_url', '').strip()
+        if referrer_url:
+            body_parts.append(f'  Referrer URL: {referrer_url}')
         mail_dict = {
             'recipient_email': toolkit.config.get(
                 'ckanext.contact.mail_to', toolkit.config.get('email_to')

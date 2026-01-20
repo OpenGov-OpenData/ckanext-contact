@@ -18,6 +18,12 @@ ckan.module('form-contact', function ($, _) {
     initialize: function () {
       self = this;
 
+      // populate the referrer URL field with document.referrer
+      const referrerField = self.el.find('#field-referrer-url');
+      if (referrerField.length) {
+        referrerField.val(document.referrer || '');
+      }
+
       // setup the recaptcha context
       self.context = window.contacts_recaptcha.load(
         self.options.key,
