@@ -13,6 +13,7 @@ from ckan.lib import mailer
 from ckan.lib.navl.dictization_functions import unflatten
 from ckan.plugins import PluginImplementations, toolkit
 from pyisemail import is_email
+from urllib.parse import urlparse
 
 from ckanext.contact import recaptcha
 from ckanext.contact.interfaces import IContact
@@ -53,6 +54,14 @@ def validate(data_dict):
         if not is_email(data_dict['email'], check_dns=True):
             errors['email'] = ['Email address appears to be invalid']
             error_summary['email'] = 'Email address appears to be invalid'
+
+    # check if referrer_url starts with site_url
+    referrer_url = data_dict.get('referrer_url', '').strip()
+    if referrer_url:
+        site_url = toolkit.config.get('ckan.site_url', '')
+        if site_url:
+            if not referrer_url.startswith(site_url):
+                data_dict.pop('referrer_url', None)
 
     # only check the recaptcha if there are no errors
     if not errors:
@@ -98,6 +107,36 @@ def build_subject(
     return f'{prefix}{" " if prefix else ""}{subject}'
 
 
+def get_dataset_title_from_url(url):
+    """
+    Try to extract the dataset title from a CKAN URL.
+
+    :param url: the URL to parse
+    :return: dataset title if successful, None on any error
+    """
+    if not url:
+        return None
+
+    try:
+        # Extract package identifier from URL
+        parsed_url = urlparse(url)
+        path_parts = parsed_url.path.split('/')
+        if len(path_parts) >= 3 and path_parts[1] == 'dataset':
+            package_id = path_parts[2]
+        else:
+            return None
+
+        if not package_id:
+            return None
+
+        # Fetch dataset title using package_show action
+        context = {'ignore_auth': True}
+        package_dict = toolkit.get_action('package_show')(context, {'id': package_id})
+        return package_dict.get('title')
+    except Exception:
+        return None
+
+
 def submit():
     """
     Take the data in the request params and send an email using them. If the data is
@@ -128,6 +167,10 @@ def submit():
         referrer_url = data_dict.get('referrer_url', '').strip()
         if referrer_url:
             body_parts.append(f'  Referrer URL: {referrer_url}')
+            # try to get dataset title if referrer_url is from a dataset
+            dataset_title = get_dataset_title_from_url(referrer_url)
+            if dataset_title:
+                body_parts.append(f'  Dataset Title: {dataset_title}')
         mail_dict = {
             'recipient_email': toolkit.config.get(
                 'ckanext.contact.mail_to', toolkit.config.get('email_to')
