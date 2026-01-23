@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 
 import pytest
+from mock import patch, MagicMock
 from freezegun import freeze_time
 
-from ckanext.contact.routes._helpers import build_subject
+from ckanext.contact.routes._helpers import build_subject, get_dataset_title_from_url
 
 
 class TestBuildSubject:
@@ -83,3 +84,60 @@ class TestBuildSubject:
     def test_prefix_provided(self):
         subject = build_subject(subject='TEST')
         assert subject == 'PREFIX: TEST'
+
+
+class TestGetDatasetTitleFromUrl:
+    @patch('ckanext.contact.routes._helpers.toolkit.get_action')
+    def test_valid_dataset_url_returns_title(self, mock_get_action):
+        mock_package_show = MagicMock(return_value={'title': 'Test Dataset Title'})
+        mock_get_action.return_value = mock_package_show
+
+        url = 'http://example.com/dataset/test-package-id'
+        result = get_dataset_title_from_url(url)
+
+        assert result == 'Test Dataset Title'
+        mock_get_action.assert_called_once_with('package_show')
+        mock_package_show.assert_called_once_with(
+            {'ignore_auth': True}, {'id': 'test-package-id'}
+        )
+
+    @patch('ckanext.contact.routes._helpers.toolkit.get_action')
+    def test_dataset_url_with_resource_returns_title(self, mock_get_action):
+        mock_package_show = MagicMock(return_value={'title': 'Dataset with Resource'})
+        mock_get_action.return_value = mock_package_show
+
+        url = 'http://example.com/dataset/my-package/resource/resource-id'
+        result = get_dataset_title_from_url(url)
+
+        assert result == 'Dataset with Resource'
+        mock_package_show.assert_called_once_with(
+            {'ignore_auth': True}, {'id': 'my-package'}
+        )
+
+    def test_empty_url_returns_none(self):
+        result = get_dataset_title_from_url('')
+        assert result is None
+
+    def test_none_url_returns_none(self):
+        result = get_dataset_title_from_url(None)
+        assert result is None
+
+    def test_non_dataset_url_returns_none(self):
+        result = get_dataset_title_from_url('http://example.com/organization/test')
+        assert result is None
+
+    def test_dataset_search_url_returns_none(self):
+        result = get_dataset_title_from_url(
+            'http://example.com/dataset/?organization=cabinet-office&license_id=notspecified'
+        )
+        assert result is None
+
+    @patch('ckanext.contact.routes._helpers.toolkit.get_action')
+    def test_package_show_exception_returns_none(self, mock_get_action):
+        mock_package_show = MagicMock(side_effect=Exception('Dataset not found'))
+        mock_get_action.return_value = mock_package_show
+
+        url = 'http://example.com/dataset/non-existent-package'
+        result = get_dataset_title_from_url(url)
+
+        assert result is None
