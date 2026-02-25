@@ -50,10 +50,23 @@ ckan.module('modal-contact', function ($, _) {
           );
 
           self.modal = $(html);
-          // populate the referrer URL field with the current page URL
+          // populate the referrer URL field with the current page URL, stripping CF params
           const referrerField = self.modal.find('#field-referrer-url');
           if (referrerField.length) {
-            referrerField.val(window.location.href || '');
+            var href = window.location.href || '';
+            try {
+              var url = new URL(href);
+              var keys = Array.from(url.searchParams.keys());
+              keys.forEach(function (key) {
+                if (key.startsWith('__cf_chl_')) {
+                  url.searchParams.delete(key);
+                }
+              });
+              href = url.toString();
+            } catch (e) {
+              // invalid URL, leave href as-is
+            }
+            referrerField.val(href);
           }
           // add a close button to the modal
           self.modal

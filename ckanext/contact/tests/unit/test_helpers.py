@@ -4,7 +4,11 @@ import pytest
 from mock import patch, MagicMock
 from freezegun import freeze_time
 
-from ckanext.contact.routes._helpers import build_subject, get_dataset_title_from_url
+from ckanext.contact.routes._helpers import (
+    build_subject,
+    clean_referrer_url,
+    get_dataset_title_from_url,
+)
 
 
 class TestBuildSubject:
@@ -84,6 +88,59 @@ class TestBuildSubject:
     def test_prefix_provided(self):
         subject = build_subject(subject='TEST')
         assert subject == 'PREFIX: TEST'
+
+
+class TestCleanReferrerUrl:
+    def test_empty_string_returns_empty(self):
+        assert clean_referrer_url('') == ''
+
+    def test_none_returns_empty(self):
+        assert clean_referrer_url(None) == ''
+
+    def test_clean_url_passes_through(self):
+        url = 'https://example.com/dataset/my-dataset'
+        assert clean_referrer_url(url) == url
+
+    def test_strips_cf_chl_tk_param(self):
+        url = 'https://example.com/dataset/foo?__cf_chl_tk=abc123'
+        assert clean_referrer_url(url) == 'https://example.com/dataset/foo'
+
+    def test_strips_multiple_cf_params(self):
+        url = (
+            'https://example.com/dataset/foo'
+            '?__cf_chl_tk=abc&__cf_chl_rt_tk=def&__cf_chl_f_tk=ghi'
+        )
+        assert clean_referrer_url(url) == 'https://example.com/dataset/foo'
+
+    def test_preserves_non_cf_params(self):
+        url = 'https://example.com/dataset/foo?page=2&__cf_chl_tk=abc&sort=name'
+        result = clean_referrer_url(url)
+        assert '__cf_chl_tk' not in result
+        assert 'page=2' in result
+        assert 'sort=name' in result
+
+    def test_contact_self_reference_returns_empty(self):
+        url = 'https://example.com/contact?__cf_chl_tk=abc123'
+        assert clean_referrer_url(url) == ''
+
+    def test_contact_self_reference_with_trailing_slash(self):
+        url = 'https://example.com/contact/?__cf_chl_tk=abc123'
+        assert clean_referrer_url(url, contact_path='/contact/') == ''
+
+    def test_contact_with_real_params_not_discarded(self):
+        url = 'https://example.com/contact?subject=hello&__cf_chl_tk=abc'
+        result = clean_referrer_url(url)
+        assert result != ''
+        assert 'subject=hello' in result
+        assert '__cf_chl_tk' not in result
+
+    def test_custom_contact_path(self):
+        url = 'https://example.com/feedback?__cf_chl_tk=abc'
+        assert clean_referrer_url(url, contact_path='/feedback') == ''
+
+    def test_non_contact_page_with_only_cf_params(self):
+        url = 'https://example.com/dataset/foo?__cf_chl_tk=abc'
+        assert clean_referrer_url(url) == 'https://example.com/dataset/foo'
 
 
 class TestGetDatasetTitleFromUrl:

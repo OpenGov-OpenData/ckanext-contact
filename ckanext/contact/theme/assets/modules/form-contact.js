@@ -18,10 +18,29 @@ ckan.module('form-contact', function ($, _) {
     initialize: function () {
       self = this;
 
-      // populate the referrer URL field with document.referrer
+      // populate the referrer URL field only if not already set by the server
       const referrerField = self.el.find('#field-referrer-url');
-      if (referrerField.length) {
-        referrerField.val(document.referrer || '');
+      if (referrerField.length && !referrerField.val()) {
+        var referrer = document.referrer || '';
+        if (referrer) {
+          try {
+            var url = new URL(referrer);
+            var keys = Array.from(url.searchParams.keys());
+            keys.forEach(function (key) {
+              if (key.startsWith('__cf_chl_')) {
+                url.searchParams.delete(key);
+              }
+            });
+            var isSelfRef =
+              url.pathname.replace(/\/$/, '') ===
+                window.location.pathname.replace(/\/$/, '') &&
+              !url.searchParams.toString();
+            referrer = isSelfRef ? '' : url.toString();
+          } catch (e) {
+            // invalid URL, leave referrer as-is
+          }
+        }
+        referrerField.val(referrer);
       }
 
       // setup the recaptcha context

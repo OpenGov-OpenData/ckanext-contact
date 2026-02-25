@@ -73,6 +73,14 @@ def form():
         except AttributeError:
             extra_vars['data']['name'] = extra_vars['data']['email'] = None
 
+        # Get the referrer URL from the request
+        raw_referrer = (
+            toolkit.request.args.get('referrer_url')
+            or toolkit.request.referrer
+            or ''
+        )
+        extra_vars['data']['referrer_url'] = _helpers.clean_referrer_url(raw_referrer)
+
     return toolkit.render('contact/form.html', extra_vars=extra_vars)
 
 
