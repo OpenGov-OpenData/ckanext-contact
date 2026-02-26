@@ -13,12 +13,39 @@ from ckan.lib import mailer
 from ckan.lib.navl.dictization_functions import unflatten
 from ckan.plugins import PluginImplementations, toolkit
 from pyisemail import is_email
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from ckanext.contact import recaptcha
 from ckanext.contact.interfaces import IContact
 
 log = logging.getLogger(__name__)
+
+
+def clean_referrer_url(url, contact_path='/contact'):
+    """
+    Remove Cloudflare challenge query parameters from a URL. If the cleaned URL
+    is just the contact page itself return an empty string.
+
+    :param url: the referrer URL to clean
+    :param contact_path: the path of the contact page to detect self-references
+    :returns: the cleaned URL, or empty string if the URL is empty or self-referencing
+    """
+    if not url:
+        return ''
+    try:
+        parsed = urlparse(url)
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        cleaned_params = {k: v for k, v in params.items() if not k.startswith('__cf_chl_')}
+        cleaned_url = urlunparse(parsed._replace(query=urlencode(cleaned_params, doseq=True)))
+        cleaned_parsed = urlparse(cleaned_url)
+        if (
+            cleaned_parsed.path.rstrip('/') == contact_path.rstrip('/')
+            and not cleaned_params
+        ):
+            return ''
+        return cleaned_url
+    except Exception:
+        return ''
 
 
 def validate(data_dict):
@@ -55,13 +82,13 @@ def validate(data_dict):
             errors['email'] = ['Email address appears to be invalid']
             error_summary['email'] = 'Email address appears to be invalid'
 
-    # check if referrer_url starts with site_url
-    referrer_url = data_dict.get('referrer_url', '').strip()
+    # clean and validate referrer_url
+    referrer_url = clean_referrer_url(data_dict.get('referrer_url', '').strip())
     if referrer_url:
         site_url = toolkit.config.get('ckan.site_url', '')
-        if site_url:
-            if not referrer_url.startswith(site_url):
-                data_dict.pop('referrer_url', None)
+        if site_url and not referrer_url.startswith(site_url):
+            referrer_url = ''
+    data_dict['referrer_url'] = referrer_url
 
     # only check the recaptcha if there are no errors
     if not errors:

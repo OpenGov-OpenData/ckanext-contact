@@ -34,7 +34,7 @@
                                  value=data.content, error=errors.content,
                                  placeholder=_('What do you have to tell us?'), is_required=true) }}
 
-                <input type="hidden" name="referrer_url" id="field-referrer-url" value="" />
+                <input type="hidden" name="referrer_url" id="field-referrer-url" value="{{ data.get('referrer_url', '') }}" />
             {% endblock %}
         </fieldset>
 
