@@ -8,3 +8,8 @@ main:
     - scripts/recaptcha_helpers.js
     - modules/modal-contact.js
     - modules/form-contact.js
+
+contact_css:
+  output: ckanext-contact/%(version)s_contact.css
+  contents:
+    - css/contact.css
