@@ -154,6 +154,7 @@ class TestValidateReferrerUrlListGuard:
     }
 
     @pytest.mark.ckan_config('ckanext.contact.check_email', 'false')
+    @pytest.mark.ckan_config('ckan.site_url', 'https://example.com')
     def test_referrer_url_as_list_does_not_crash(self):
         data_dict = {**self._base_data, 'referrer_url': ['https://example.com/dataset/foo', 'https://example.com/dataset/foo']}
         with patch('ckanext.contact.routes._helpers.recaptcha.check_recaptcha'):
@@ -169,6 +170,7 @@ class TestValidateReferrerUrlListGuard:
         assert data_dict['referrer_url'] == ''
 
     @pytest.mark.ckan_config('ckanext.contact.check_email', 'false')
+    @pytest.mark.ckan_config('ckan.site_url', 'https://example.com')
     def test_referrer_url_as_string_still_works(self):
         data_dict = {**self._base_data, 'referrer_url': 'https://example.com/dataset/foo'}
         with patch('ckanext.contact.routes._helpers.recaptcha.check_recaptcha'):
