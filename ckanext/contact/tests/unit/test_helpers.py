@@ -8,6 +8,7 @@ from ckanext.contact.routes._helpers import (
     build_subject,
     clean_referrer_url,
     get_dataset_title_from_url,
+    validate,
 )
 
 
@@ -141,6 +142,39 @@ class TestCleanReferrerUrl:
     def test_non_contact_page_with_only_cf_params(self):
         url = 'https://example.com/dataset/foo?__cf_chl_tk=abc'
         assert clean_referrer_url(url) == 'https://example.com/dataset/foo'
+
+
+class TestValidateReferrerUrlListGuard:
+    """Tests for the defensive list-guard on referrer_url in validate()."""
+
+    _base_data = {
+        'name': 'Test User',
+        'email': 'test@example.com',
+        'content': 'Test message',
+    }
+
+    @pytest.mark.ckan_config('ckanext.contact.check_email', 'false')
+    def test_referrer_url_as_list_does_not_crash(self):
+        data_dict = {**self._base_data, 'referrer_url': ['https://example.com/dataset/foo', 'https://example.com/dataset/foo']}
+        with patch('ckanext.contact.routes._helpers.recaptcha.check_recaptcha'):
+            errors, _, _ = validate(data_dict)
+        assert 'referrer_url' not in errors
+        assert data_dict['referrer_url'] == 'https://example.com/dataset/foo'
+
+    @pytest.mark.ckan_config('ckanext.contact.check_email', 'false')
+    def test_referrer_url_as_empty_list_becomes_empty_string(self):
+        data_dict = {**self._base_data, 'referrer_url': []}
+        with patch('ckanext.contact.routes._helpers.recaptcha.check_recaptcha'):
+            validate(data_dict)
+        assert data_dict['referrer_url'] == ''
+
+    @pytest.mark.ckan_config('ckanext.contact.check_email', 'false')
+    def test_referrer_url_as_string_still_works(self):
+        data_dict = {**self._base_data, 'referrer_url': 'https://example.com/dataset/foo'}
+        with patch('ckanext.contact.routes._helpers.recaptcha.check_recaptcha'):
+            errors, _, _ = validate(data_dict)
+        assert 'referrer_url' not in errors
+        assert data_dict['referrer_url'] == 'https://example.com/dataset/foo'
 
 
 class TestGetDatasetTitleFromUrl:
