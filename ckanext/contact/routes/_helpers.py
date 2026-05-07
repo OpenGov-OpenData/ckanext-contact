@@ -83,7 +83,10 @@ def validate(data_dict):
             error_summary['email'] = 'Email address appears to be invalid'
 
     # clean and validate referrer_url
-    referrer_url = clean_referrer_url(data_dict.get('referrer_url', '').strip())
+    referrer_url_raw = data_dict.get('referrer_url', '')
+    if isinstance(referrer_url_raw, list):
+        referrer_url_raw = referrer_url_raw[0] if referrer_url_raw else ''
+    referrer_url = clean_referrer_url(referrer_url_raw.strip())
     if referrer_url:
         site_url = toolkit.config.get('ckan.site_url', '')
         if site_url and not referrer_url.startswith(site_url):

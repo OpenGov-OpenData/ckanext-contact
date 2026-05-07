@@ -75,7 +75,7 @@ def form():
 
         # Get the referrer URL from the request
         raw_referrer = (
-            toolkit.request.args.get('referrer_url')
+            toolkit.request.args.get('ref')
             or toolkit.request.referrer
             or ''
         )
