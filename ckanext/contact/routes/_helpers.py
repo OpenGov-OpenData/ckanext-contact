@@ -190,8 +190,8 @@ def submit():
     )
     if 'email' not in data_dict:
         log.warning('contact form POST: email missing from data_dict; '
-                    'raw_form_keys=%s data_dict_keys=%s',
-                    list(toolkit.request.form.keys()), list(data_dict.keys()))
+                    'raw_form=%s data_dict=%s',
+                    dict(toolkit.request.form), data_dict)
 
     # validate the request params
     errors, error_summary, recaptcha_error = validate(data_dict)
