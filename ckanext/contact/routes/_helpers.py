@@ -58,8 +58,15 @@ def validate(data_dict):
     """
     errors = {}
     error_summary = {}
+    required_fields = {'name', 'email', 'content'}
     optional_fields = {'subject', 'referrer_url'}
     recaptcha_error = None
+
+    # check that all required fields are present
+    for field in required_fields:
+        if field not in data_dict:
+            errors[field] = ['Missing Value']
+            error_summary[field] = 'Missing value'
 
     # check each field to see if it has a value and if not, show and error
     for field, value in data_dict.items():
@@ -76,7 +83,7 @@ def validate(data_dict):
     # check the email address, if there is one and the config option isn't off
     if (
         toolkit.asbool(toolkit.config.get('ckanext.contact.check_email', True))
-        and data_dict['email']
+        and data_dict.get('email')
     ):
         if not is_email(data_dict['email'], check_dns=True):
             errors['email'] = ['Email address appears to be invalid']
@@ -181,6 +188,10 @@ def submit():
     data_dict = logic.clean_dict(
         unflatten(logic.tuplize_dict(logic.parse_params(toolkit.request.values)))
     )
+    if 'email' not in data_dict:
+        log.warning('contact form POST: email missing from data_dict; '
+                    'raw_form=%s data_dict=%s',
+                    dict(toolkit.request.form), data_dict)
 
     # validate the request params
     errors, error_summary, recaptcha_error = validate(data_dict)
@@ -191,7 +202,7 @@ def submit():
             f'{data_dict["content"]}\n',
             'Sent by:',
             f'  Name: {data_dict["name"]}',
-            f'  Email: {data_dict["email"]}',
+            f'  Email: {data_dict.get("email", "")}',
         ]
         # include referrer URL if available
         referrer_url = data_dict.get('referrer_url', '').strip()
@@ -210,7 +221,7 @@ def submit():
             ),
             'subject': build_subject(subject=data_dict.get('subject')),
             'body': '\n'.join(body_parts),
-            'headers': {'reply-to': data_dict['email']},
+            'headers': {'reply-to': data_dict.get('email', '')},
         }
 
         # allow other plugins to modify the mail_dict
