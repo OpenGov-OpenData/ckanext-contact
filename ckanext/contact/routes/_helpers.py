@@ -240,7 +240,8 @@ def submit():
         for name, email in zip(names, emails):
             try:
                 mailer.mail_recipient(name, email, **mail_dict)
-            except (mailer.MailerException, socket.error):
+            except (mailer.MailerException, socket.error) as e:
+                log.error('contact form: failed to send email to %s: %s', email, e)
                 email_success = False
 
     return {
